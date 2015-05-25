@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Article Page</title>
+</head>
+<body>
+	<h1>MyApp</h1>
+
+	<div>
+		<h2>New Article</h2>
+		<div>
+			<a href="/signout">Sign Out</a>
+		</div>
+		<div>
+			<button id="btnNewArticle">New Article</button>
+		</div>
+		<form id="newArticle" method="post">
+			<div>
+				<input name="id" type="text" placeholder="Id" style="display:none;">
+				<div id="displayId">ID: auto</div>
+			</div>
+			<div>
+				<input name="title" type="text" placeholder="Title">
+			</div>
+			<div>
+				<textarea name="content" placeholder="Content"></textarea>
+			</div>
+			<div>
+				<!-- <div>en or np (TODO: change this to option)</div> -->
+				<!-- <input name="language" type="text" placeholder="Language (en or np) ">	 -->
+				<select name="language">
+					<option value="en">English</option>
+					<option value="np">Nepali</option>
+				</select>
+			</div>
+			<div>
+				<input name="ordering" type="text" placeholder="Ordering">	
+			</div>
+			<div>
+				<button type="submit">Submit</button>
+			</div>
+		</form>
+	</div>
+	<div>
+		<h2>List of Articles</h2>
+		<div></div>
+		<div id="articlesContainer"></div>
+	</div>
+
+
+	<script type="text/javascript" src="/static/js/jquery-2.1.1.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#btnNewArticle').click(function() {
+				var e_target = $('form#newArticle');
+				$('input, textarea, select', e_target).val("");
+				$('#displayId', e_target).text("ID: auto");
+				// $('form#newArticle input').text("");
+			});
+
+			var onDeleteArticle = function () {
+				var e = $(this);
+				var article = e.data('article');
+				$.post('/article/delete', {
+					id: article._id
+				}, function(result) {
+					console.log(result);
+				});
+			};
+
+			var onEditArticle = function () {
+				var e = $(this);
+				// console.log(e.data());
+				var e_target = $('form#newArticle');
+				var article = e.data('article');
+
+				// console.log(e.attr('data-article'));
+				$('input[name="id"]', e_target).val(article._id);
+				$('#displayId', e_target).text("ID: " + article._id);
+				$('input[name="title"]', e_target).val(article.title);
+				$('textarea[name="content"]', e_target).val(article.content);
+				$('select[name="language"]', e_target).val(article.language);
+				$('input[name="ordering"]', e_target).val(article.ordering);
+				// $.post('/article/delete', {
+				// 	id: e.attr('data-id')
+				// }, function(result) {
+				// 	console.log(result);
+				// });
+			};
+
+			var updateUI = function(article) {
+				var e = $('<div/>', {});
+				e.append($('<button/>', {
+					text: 'Edit'
+				}).data('article', article).click(onEditArticle));
+				e.append($('<button/>', {
+					'data-article':article,
+					text: 'Delete'
+				}).data('article', article).click(onDeleteArticle));
+				return e;
+			};
+
+			var e = $('#articlesContainer');
+			$.getJSON('/article/all', function(articles) {
+				articles.forEach(function(article) {
+					var e_ul = $('<ul/>');
+					e_ul.append($('<li/>', {
+						text: article._id
+					})).append($('<li/>', {
+						text: article.title
+					})).append($('<li/>', {
+						html: article.content
+					})).append($('<li/>', {
+						text: "language: " +  article.language
+					})).append($('<li/>', {
+						text: "Created(ms): " + article.created
+					})).append($('<li/>', {
+						text: "User: " + article.user
+					})).append($('<li/>', {
+						html: updateUI(article)
+					}));
+					e.append(e_ul);
+				});
+			});
+		});
+	</script>
+</body>
+</html>

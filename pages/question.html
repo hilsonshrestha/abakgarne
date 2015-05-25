@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Admin</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/common.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/widgets.css">
+<style type="text/css">
+#questionsContainer {
+	margin: 16pt 0;
+}
+	
+#questionsContainer ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: block;
+	width: 100%;
+	clear:both;
+	background: #fff;
+	border: 1px solid #eee;
+	word-break: break-all;
+}
+
+#questionsContainer ul.full {
+	background: #efe;
+}
+
+#questionsContainer ul:hover {
+	background: #efe;
+	cursor: pointer;
+}
+
+#questionsContainer ul + ul {
+	border-top: 0;
+}
+
+#questionsContainer ul:before {
+	clear: both;
+	display: block;
+	content: " ";
+	position: relative;
+	height: 10pt;
+}
+
+#questionsContainer ul:after {
+	clear: both;
+	display: block;
+	content: " ";
+	position: relative;
+}
+
+
+#questionsContainer ul li {
+	padding: 8pt;
+	box-sizing: border-box;
+}
+
+#questionsContainer ul li button {
+	line-height: 8pt;
+}
+#questionsContainer ul li button + button {
+	margin-left: 4pt;
+}
+
+#questionsContainer ul li.a_id {
+	color: rgba(0,0,0,.4);
+	font-size: .75em;
+	display: none;
+}
+
+#questionsContainer ul.full li.a_id {
+	display: block;
+}
+
+#questionsContainer ul li.a_title {
+}
+
+#questionsContainer ul li.a_content {
+	overflow: hidden;
+	height: 2em;
+	color: #aaa;
+}
+
+#questionsContainer ul.full li.a_content {
+	height: auto;
+	color: #000;
+}
+
+
+#questionsContainer ul li.a_created {
+	font-size: .75em;
+	color: #777;
+}
+
+
+
+#questionsContainer ul li.a_language {
+	display: none;
+}
+
+#questionsContainer ul li.a_user {
+	display: none;
+}
+
+#questionsContainer ul.full li.a_user {
+	/*display: block;*/
+}
+
+#questionsContainer ul li.a_updateUI {
+	clear: both;
+	height: 32pt;
+}
+
+#questionsContainer ul li.a_updateUI .updateUIContainer {
+	display: none;
+}
+#questionsContainer ul:hover li.a_updateUI .updateUIContainer {
+	display: block;
+}
+
+	</style>
+
+</head>
+<body>
+<header>
+	<!-- <div id="brand">K Garne?</div> -->
+	<ul class="nav">
+		<li id="brand"><a href="/">K garne?</a></li>
+		<li><a href="/">Articles</a></li>
+		<li class="selected"><a href="/question">Questions</a></li>
+		<li><a href="/answer">Answers</a></li>
+		<li><a href="/signout">Sign Out</a></li>
+	</ul>
+</header>
+<main>
+	<div id="notificationWrapper" class="">
+		<div id="notificationNewQuestion" class="notificationContainer">
+			<div>Submitting your Question</div>
+			<div>Please Wait...</div>
+		</div>
+		<div id="notificationFieldError" class="notificationContainer">
+			<div><b>Error</b></div>
+			<div>Please recheck <span class="field"></span> and try again.</div>
+		</div>
+		<div id="notificationServer" class="notificationContainer">
+			<div></div>
+		</div>
+	</div>
+	<div class="sideBar">
+		<ul id="inPageNav">
+			<li class="selected" data-action="0">All Questions</li>
+			<li data-action="1">Add New</li>
+		</ul>
+	</div>
+	<div class="content">
+		<h2>List of Questions</h2>
+		<div></div>
+		<div id="questionsContainer"></div>
+	</div>
+	<div class="content">
+		<h2>New Question</h2>
+		<form id="newQuestion" method="post">
+			<div class="frmClear">
+				<input name="id" type="text" placeholder="Id" style="display:none;">
+				<div id="displayId">ID: auto</div>
+			</div>
+			<div class="frmClear">
+				<input name="question" type="text" placeholder="Question">
+			</div>
+			<div class="frmClear">
+				<button type="submit">Submit</button>
+			</div>
+		</form>
+	</div>
+</main>
+
+
+	<script type="text/javascript" src="/static/js/jquery-2.1.1.js"></script>
+	<script type="text/javascript" src="/static/js/moment.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#btnnewQuestion').click(function() {
+				var e_target = $('form#newQuestion');
+				$('input', e_target).val("");
+				$('#displayId', e_target).text("ID: auto");
+			});
+
+			var onDeleteQuestion = function () {
+				if (confirm("Press OK to confirm deletion.")) {
+					var e = $(this);
+					var question = e.data('question');
+					$.post('/question/delete', {
+						id: question._id
+					}, function(m) {
+						if (m.msg) {
+							getQuestions();
+
+							$('#notificationWrapper').show(0, function() {
+								// $('#notificationS').removeClass('visible');
+								$('#notificationServer').addClass('visible');
+								$('#notificationServer div').text(m.details);
+							});
+							setTimeout(function() {
+								$('#notificationServer').removeClass('visible');
+								$('#notificationWrapper').fadeOut();
+								$('.content').hide();
+								$('.content').eq(0).show();
+
+							}, 2000);
+
+						}
+					});
+				}
+			};
+
+			var onEditQuestion = function () {
+				var e = $(this);
+				var e_target = $('form#newQuestion');
+				var question = e.data('question');
+				$('input[name="id"]', e_target).val(question._id);
+				$('#displayId', e_target).text("ID: " + question._id);
+				$('input[name="question"]', e_target).val(question.question);
+				$('.content').hide();
+				$('.content').eq(1).show();
+			};
+
+			var updateUI = function(question) {
+				var e = $('<div/>', {
+					class: 'updateUIContainer'
+				});
+				e.append($('<button/>', {
+					text: 'Edit'
+				}).data('question', question).click(onEditQuestion));
+				e.append($('<button/>', {
+					'data-question': question,
+					text: 'Delete'
+				}).data('question', question).click(onDeleteQuestion));
+				return e;
+			};
+
+			var getQuestions = function() {
+				var e = $('#questionsContainer').empty();
+				$.getJSON('/question/all', function(questions) {
+					questions.forEach(function(question) {
+						var created = moment(question.created);
+						var e_ul = $('<ul/>');
+						e_ul.append($('<li/>', {
+							text: question.question,
+							class: 'a_title'
+						})).append($('<li/>', {
+							text: 'ID: ' + question._id,
+							class: 'a_id'
+						})).append($('<li/>', {
+							text: created.calendar(),
+							class: 'a_created'
+						})).append($('<li/>', {
+							text: "User: " + question.user,
+							class: "a_user"
+						})).append($('<li/>', {
+							html: updateUI(question),
+							class: "a_updateUI"
+						}));
+						e.append(e_ul);
+					});
+				});
+			};
+			getQuestions();
+			
+			$('.content').hide().eq(0).show();
+		
+			$('#inPageNav li').click(function() {
+				$('#inPageNav li').removeClass('selected');
+				$('.content').hide().eq(($(this).addClass('selected').attr('data-action'))).show();
+			});
+
+			$('#inPageNav li').eq(1).click(function() {
+				$('input, textarea', 'form').val('');
+				$('#displayId').text('ID: auto');
+			});
+
+
+
+			$('form').submit(function(e) {
+				e.preventDefault();
+
+				$('#notificationWrapper').show(0, function() {
+					$('#notificationNewQuestion').addClass('visible');
+				});
+				$.ajax({
+					type: 'POST',   
+					url: '/question',   
+					data: $('form').serialize(),
+					success: function(m) {
+						if (m.msg == "field_error") {
+							$('#notificationWrapper').show(0, function() {
+								$('#notificationNewQuestion').removeClass('visible');
+								$('#notificationFieldError').addClass('visible');
+								$('#notificationFieldError span.field').text(m.field);
+							});
+							setTimeout(function() {
+								$('#notificationFieldError').removeClass('visible');
+								$('#notificationWrapper').fadeOut();		
+							}, 2000);
+						} else {
+							$('#notificationNewQuestion').removeClass('visible');
+							$('#notificationWrapper').fadeOut();
+						}
+
+						if (m.msg == "success") {
+							getQuestions();
+							$('#notificationWrapper').show(0, function() {
+								// $('#notificationS').removeClass('visible');
+								$('#notificationServer').addClass('visible');
+								$('#notificationServer div').text(m.details);
+							});
+							setTimeout(function() {
+								$('#notificationServer').removeClass('visible');
+								$('#notificationWrapper').fadeOut();
+								$('.content').hide();
+								$('.content').eq(0).show();
+
+							}, 2000);
+
+						}
+
+						if (m.msg == "redirect") {
+							location.href = m.url;
+						}
+					}
+				}); 
+
+			});
+
+
+
+		});
+	</script>
+</body>
+</html>

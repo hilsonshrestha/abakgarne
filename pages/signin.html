@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign In</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/common.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/widgets.css">
+	<style type="text/css">
+		#signinContainer {
+			background: #fff;
+			border: 1px solid #ccc;
+			border-radius: 5pt;
+		}
+		form {
+			margin-top: 16pt;
+		}
+	</style>
+</head>
+<body>
+	<div id="notificationWrapper" class="">
+		<div id="notificationSignIn" class="notificationContainer">
+			<div>Signing In</div>
+			<div>Please Wait...</div>
+		</div>
+		<div id="notificationFieldError" class="notificationContainer">
+			<div><b>Error</b>
+			Please recheck your username and password.</div>
+		</div>
+	</div>
+
+	<div class="mid300 p20" style="text-align:center;">
+		<h1>K Garne</h1>
+		<div>aaspatal aauna agadi</div>
+	</div>
+	<div id="signinContainer" class="mid300 p20">
+	 	<h2>Sign In</h2>
+	 	<!-- <h3>You are signing up as an admin user.</h3> -->
+		<form method="post">
+			<div class="frmClear">
+				<input name="username" type="text" placeholder="Username">
+			</div>
+			<div class="frmClear">
+				<input name="password" type="password" placeholder="Password">
+			</div>
+			<div class="frmClear">
+				<button type="submit">Sign In</button>
+			</div>
+		</form>
+	</div>
+
+	<script type="text/javascript" src="/static/js/jquery-2.1.1.js"></script>
+	<script type="text/javascript">
+		$('form').submit(function(e) {
+			e.preventDefault();
+
+			$('#notificationWrapper').show(0, function() {
+				$('#notificationSignIn').addClass('visible');
+			});
+			$.ajax({
+				type: 'POST',   
+				url: '/signin',   
+				data: $('form').serialize(),
+				success: function(m) {
+					if (m.msg == "invalid_username_password") {
+						$('#notificationWrapper').show(0, function() {
+							$('#notificationSignIn').removeClass('visible');
+							$('#notificationFieldError').addClass('visible');
+						});
+						setTimeout(function() {
+							$('#notificationFieldError').removeClass('visible');
+							$('#notificationWrapper').fadeOut();		
+						}, 2000);
+					} else {
+						$('#notificationSignIn').removeClass('visible');
+						$('#notificationWrapper').fadeOut();
+					}
+
+					if (m.msg == "redirect") {
+						location.href = m.url;
+					}
+				}
+			}); 
+
+		});
+
+	</script>
+
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Answer Page</title>
+</head>
+<body>
+	<h1>MyApp</h1>
+
+	<div>
+		<h2>New Answer Test</h2>
+		<div>
+			<!-- <a href="/signout">Sign Out</a> -->
+		</div>
+		<div>
+			<!-- <button id="btnNewQuestion">New Answer (TEST ONLY. WILL BE CARRIED OUT FROM MOBILE)</button> -->
+		</div>
+		<form id="newQuestion" method="post">
+			<div>
+				<input name="id" type="text" placeholder="Id" style="display:none;">
+				<div id="displayId">ID: auto</div>
+			</div>
+			<div>
+				<div>TODO: Foreign key validation.</div>
+				<input name="questionID" type="text" placeholder="QuestionID">
+			</div>
+			<div>
+				<div>true or false only. for test purpose.</div>
+				<input name="answer" type="text" placeholder="AnswerID (true or false)">
+			</div>
+			<div>
+				<input name="responderID" type="text" placeholder="ResponderID">
+			</div>
+
+
+
+<!-- 			<div>
+				<textarea name="content" placeholder="Content"></textarea>
+			</div>
+			<div>
+				<input name="ordering" type="text" placeholder="Ordering">	
+			</div> -->
+			<div>
+				<button type="submit">Submit</button>
+			</div>
+		</form>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Admin</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/common.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/widgets.css">
+
+	<style type="text/css">
+#articlesContainer {
+	margin: 16pt 0;
+}
+	
+#articlesContainer ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: block;
+	width: 100%;
+	clear:both;
+	background: #fff;
+	border: 1px solid #eee;
+	word-break: break-all;
+}
+
+#articlesContainer ul.full {
+	background: #efe;
+}
+
+#articlesContainer ul:hover {
+	background: #efe;
+	cursor: pointer;
+}
+
+#articlesContainer ul + ul {
+	border-top: 0;
+}
+
+#articlesContainer ul:before {
+	clear: both;
+	display: block;
+	content: " ";
+	position: relative;
+	height: 10pt;
+}
+
+#articlesContainer ul:after {
+	clear: both;
+	display: block;
+	content: " ";
+	position: relative;
+}
+
+
+#articlesContainer ul li {
+	padding: 8pt;
+	box-sizing: border-box;
+}
+
+#articlesContainer ul li button {
+	line-height: 8pt;
+}
+#articlesContainer ul li button + button {
+	margin-left: 4pt;
+}
+
+#articlesContainer ul li.a_id {
+	color: rgba(0,0,0,.4);
+	font-size: .75em;
+	display: none;
+}
+
+#articlesContainer ul.full li.a_id {
+	display: block;
+}
+
+#articlesContainer ul li.a_title {
+}
+
+#articlesContainer ul li.a_content {
+	overflow: hidden;
+	height: 2em;
+	color: #aaa;
+}
+
+#articlesContainer ul.full li.a_content {
+	height: auto;
+	color: #000;
+}
+
+
+#articlesContainer ul li.a_created {
+	font-size: .75em;
+	color: #777;
+}
+
+
+
+#articlesContainer ul li.a_language {
+	display: none;
+	color: #777;
+	font-size: .75em;
+}
+
+#articlesContainer ul.full li.a_language {
+	display: block;
+}
+
+#articlesContainer ul li.a_user {
+	display: none;
+}
+
+#articlesContainer ul.full li.a_user {
+	/*display: block;*/
+}
+
+#articlesContainer ul li.a_updateUI {
+	clear: both;
+	height: 32pt;
+}
+
+#articlesContainer ul li.a_updateUI .updateUIContainer {
+	display: none;
+}
+#articlesContainer ul:hover li.a_updateUI .updateUIContainer {
+	display: block;
+}
+
+	</style>
+
+</head>
+<body>
+<header>
+	<!-- <div id="brand">K Garne?</div> -->
+	<ul class="nav">
+		<li id="brand"><a href="/">K garne?</a></li>
+		<li class="selected"><a href="/article">Articles</a></li>
+		<li><a href="/question">Questions</a></li>
+		<li><a href="/answer">Answers</a></li>
+		<li><a href="/signout">Sign Out</a></li>
+	</ul>
+</header>
+<main>
+	<div id="notificationWrapper" class="">
+		<div id="notificationNewArticle" class="notificationContainer">
+			<div>Submitting your article</div>
+			<div>Please Wait...</div>
+		</div>
+		<div id="notificationFieldError" class="notificationContainer">
+			<div><b>Error</b></div>
+			<div>Please recheck <span class="field"></span> and try again.</div>
+		</div>
+		<div id="notificationServer" class="notificationContainer">
+			<div></div>
+		</div>
+	</div>
+
+	<div class="sideBar">
+		<ul id="inPageNav">
+			<li class="selected" data-action="0">All Articles</li>
+			<li data-action="1">Add New</li>
+		</ul>
+	</div>
+	<div class="content">
+		<h2>Articles</h2>
+		<div id="articlesContainer"></div>
+	</div>
+	<div class="content">
+		<h2>New Article</h2>
+		<div>
+			<!-- <button id="btnNewArticle">New Article</button> -->
+		</div>
+		<form id="newArticle" method="post">
+			<div class="frmClear">
+				<input name="id" type="text" placeholder="Id" style="display:none;">
+				<div id="displayId">ID: auto</div>
+			</div>
+			<div class="frmClear">
+				<input name="title" type="text" placeholder="Title">
+			</div>
+			<div class="frmClear">
+				<textarea name="content" placeholder="Content"></textarea>
+			</div>
+			<div class="frmClear">
+				<!-- <div>en or np (TODO: change this to option)</div> -->
+				<!-- <input name="language" type="text" placeholder="Language (en or np) ">	 -->
+				<select name="language">
+					<option value="en">English</option>
+					<option value="np">Nepali</option>
+				</select>
+			</div>
+			<div class="frmClear">
+				<input name="ordering" type="text" placeholder="Ordering">	
+			</div>
+			<div class="frmClear">
+				<button type="submit">Submit</button>
+			</div>
+		</form>
+	</div>
+</main>
+
+
+
+
+
+	<script type="text/javascript" src="/static/js/jquery-2.1.1.js"></script>
+	<script type="text/javascript" src="/static/js/moment.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#btnNewArticle').click(function() {
+				var e_target = $('form#newArticle');
+				$('input, textarea, select', e_target).val("");
+				$('#displayId', e_target).text("ID: auto");
+				// $('form#newArticle input').text("");
+			});
+
+			var onDeleteArticle = function () {
+				if (confirm("Press OK to confirm deletion.")) {
+					var e = $(this);
+					var article = e.data('article');
+					$.post('/article/delete', {
+						id: article._id
+					}, function(m) {
+						if (m.msg) {
+							getArticles();
+							$('#notificationWrapper').show(0, function() {
+								// $('#notificationS').removeClass('visible');
+								$('#notificationServer').addClass('visible');
+								$('#notificationServer div').text(m.details);
+							});
+							setTimeout(function() {
+								$('#notificationServer').removeClass('visible');
+								$('#notificationWrapper').fadeOut();
+								$('.content').hide();
+								$('.content').eq(0).show();
+
+							}, 2000);
+
+						}
+					});
+				}
+			};
+
+			var onEditArticle = function () {
+				var e = $(this);
+				// console.log(e.data());
+				var e_target = $('form#newArticle');
+				var article = e.data('article');
+
+				// console.log(e.attr('data-article'));
+				$('input[name="id"]', e_target).val(article._id);
+				$('#displayId', e_target).text("ID: " + article._id);
+				$('input[name="title"]', e_target).val(article.title);
+				$('textarea[name="content"]', e_target).val(article.content);
+				$('select[name="language"]', e_target).val(article.language);
+				$('input[name="ordering"]', e_target).val(article.ordering);
+
+				$('.content').hide();
+				$('.content').eq(1).show();
+				// $.post('/article/delete', {
+				// 	id: e.attr('data-id')
+				// }, function(result) {
+				// 	console.log(result);
+				// });
+			};
+
+			var updateUI = function(article) {
+				var e = $('<div/>', {
+					class: 'updateUIContainer'
+				});
+				e.append($('<button/>', {
+					text: 'Edit'
+				}).data('article', article).click(onEditArticle));
+				e.append($('<button/>', {
+					'data-article':article,
+					text: 'Delete'
+				}).data('article', article).click(onDeleteArticle));
+				return e;
+			};
+
+
+			var getArticles = function () {
+				var e = $('#articlesContainer').empty();
+				$.getJSON('/article/all', function(articles) {
+					articles.forEach(function(article) {
+						var e_ul = $('<ul/>');
+
+						e_ul.click(function() {
+							$(this).toggleClass('full');
+						});
+
+						var created = moment(article.created);
+
+						e_ul.append($('<li/>', {
+							text: article.title,
+							class: 'a_title'
+						})).append($('<li/>', {
+							text: "ID: " + article._id,
+							class: 'a_id'
+						})).append($('<li/>', {
+							html: article.content,
+							class: "a_content"
+						})).append($('<li/>', {
+							text: "Lang: " + article.language,
+							class: "a_language"
+						})).append($('<li/>', {
+							// text: created.fromNow(),
+							text: created.calendar(),
+							class: "a_created"
+						})).append($('<li/>', {
+							text: "User: " + article.user,
+							class: "a_user"
+						})).append($('<li/>', {
+							html: updateUI(article),
+							class: "a_updateUI"
+						}));
+						e.append(e_ul);
+					});
+				});
+			}
+
+			getArticles();
+
+
+			$('.content').hide().eq(0).show();
+		
+			$('#inPageNav li').click(function() {
+				$('#inPageNav li').removeClass('selected');
+				$('.content').hide().eq(($(this).addClass('selected').attr('data-action'))).show();
+			});
+
+			$('#inPageNav li').eq(1).click(function() {
+				$('input, textarea', 'form').val('');
+				$('#displayId').text('ID: auto');
+			});
+
+
+
+			$('form').submit(function(e) {
+				e.preventDefault();
+
+				$('#notificationWrapper').show(0, function() {
+					$('#notificationNewArticle').addClass('visible');
+				});
+				$.ajax({
+					type: 'POST',   
+					url: '/article',   
+					data: $('form').serialize(),
+					success: function(m) {
+						if (m.msg == "field_error") {
+							$('#notificationWrapper').show(0, function() {
+								$('#notificationNewArticle').removeClass('visible');
+								$('#notificationFieldError').addClass('visible');
+								$('#notificationFieldError span.field').text(m.field);
+							});
+							setTimeout(function() {
+								$('#notificationFieldError').removeClass('visible');
+								$('#notificationWrapper').fadeOut();		
+							}, 2000);
+						} else {
+							$('#notificationNewArticle').removeClass('visible');
+							$('#notificationWrapper').fadeOut();
+						}
+
+						if (m.msg == "success") {
+							// location.href = m.url;
+							getArticles();
+
+							$('#notificationWrapper').show(0, function() {
+								// $('#notificationS').removeClass('visible');
+								$('#notificationServer').addClass('visible');
+								$('#notificationServer div').text(m.details);
+							});
+							setTimeout(function() {
+								$('#notificationServer').removeClass('visible');
+								$('#notificationWrapper').fadeOut();
+								$('.content').hide();
+								$('.content').eq(0).show();
+
+							}, 2000);
+
+						}
+
+						if (m.msg == "redirect") {
+							location.href = m.url;
+						}
+					}
+				}); 
+
+			});
+
+
+
+		});
+	</script>
+</body>
+</html>
